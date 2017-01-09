@@ -1,0 +1,47 @@
+- name: yum update
+  sudo_user: root
+  command: bash -lc "yum update"
+
+- name: add users
+  user: name="{{item.n}}"
+        password="{{item.p}}"
+        shell=/bin/bash
+        state=present
+        append=yes
+        groups=sudo
+  with_items:
+    - { n: 'shiruco',  p: '$1$isis$CIPzXSWJMLcqxLrZr04MN0' }
+
+- name: add app user
+  user: name=isis shell=/bin/bash state=present append=yes
+
+- authorized_key: user=shiruco key="{{ lookup('file',  'shiruco.pub') }}"
+
+- name: add app user
+  authorized_key: user=isis key="{{ item }}"
+  with_file:
+    - shiruco.pub
+
+- name: Set timezone variables
+#  copy: content='Etc/UTC'
+  copy: content="{{ timezone }}"
+        dest=/etc/timezone
+        owner=root
+        group=root
+        mode=0644
+        backup=yes
+  register: timezone
+
+- name: update timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+  when: timezone.changed
+
+- name: "check if exist /root/.ssh/authorized_keys"
+  sudo_user: root
+  stat: path=/root/.ssh/authorized_keys
+  register: root_authorized_keys
+
+- name: delete root authorized_keys
+  sudo_user: root
+  command: bash -lc 'rm /root/.ssh/authorized_keys'
+  when: root_authorized_keys.stat.exists == True
