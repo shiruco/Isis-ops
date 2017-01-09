@@ -56,8 +56,6 @@ ssh isis-dev01
 
 後は VM内で git clone して好きに開発する
 
-本番サーバの $HOME/.ssh/config の設定方法は別途slackなどで確認のこと
-
 #### 3. isis-server staging環境構築
 
 ```
